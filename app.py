@@ -4,6 +4,12 @@ import duckdb
 import pandas as pd
 import streamlit as st
 
+st.write("""
+SQL SRS
+Spaced Repetition System with SQL
+""")
+
+
 # données
 csv = """
 beverage,price
@@ -27,6 +33,17 @@ CROSS JOIN food_items
 """
 
 solution = duckdb.sql(answer).df()
+
+
+with st.sidebar:
+    option = st.selectbox(
+        "What would you like to review?",
+        ("Joins", "GroupBy", "Window Functions"),
+        index=None,
+        placeholder="Select a theme",
+    )
+
+st.write("You selected:", option)
 
 # query sql
 st.header("Entrez votre code :")
