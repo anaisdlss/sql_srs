@@ -11,28 +11,37 @@ Spaced Repetition System with SQL
 
 
 # données
-csv = """
+CSV = """
 beverage,price
 orange juice,2.5
 Expresso,2
 Tea,3
 """
-beverages = pd.read_csv(io.StringIO(csv))
+beverages = pd.read_csv(io.StringIO(CSV))
 
-csv2 = """
+CSV2 = """
 food_item,food_price
 cookie juice,2.5
 chocolatine,2
 muffin,3
 """
-food_items = pd.read_csv(io.StringIO(csv2))
+food_items = pd.read_csv(io.StringIO(CSV2))
 
-answer = """
+ANSWER_STR = """
 SELECT * FROM beverages
 CROSS JOIN food_items
 """
 
-solution = duckdb.sql(answer).df()
+solution_df = duckdb.sql(ANSWER_STR).df()
+
+
+with st.sidebar:
+    option = st.selectbox(
+        "What do you want to review ?",
+        ["Joins", "Groupby", "Window Function"],
+        placeholder="Select a theme...",
+    )
+    st.write(f"You selected {option}")
 
 
 with st.sidebar:
@@ -52,9 +61,23 @@ if query:
     result = duckdb.sql(query).df()
     st.dataframe(result)
 
+    try:
+        result = result[solution_df.columns]
+        st.dataframe(result.compare(solution_df))
+    except KeyError:
+        st.write("Some columns are missing")
+    except ValueError:
+        n_lines_differences = result.shape[0] - solution_df.shape[0]
+        st.write(f"Result has {n_lines_differences} lines with the solution")
 
-# tabes solutions
-tab2, tab3 = st.tabs(["Table", "Solution"])
+
+def fonction():
+    """coucocu"""
+    print("coucou")
+
+
+# tabes solution_dfs
+tab2, tab3 = st.tabs(["Table", "solution_df"])
 
 with tab2:
     st.write("table: beverages")
@@ -62,7 +85,7 @@ with tab2:
     st.write("table: food_items")
     st.dataframe(food_items)
     st.write("expected:")
-    st.dataframe(solution)
+    st.dataframe(solution_df)
 
 with tab3:
-    st.write(answer)
+    st.write(ANSWER_STR)
