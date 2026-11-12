@@ -1,3 +1,5 @@
 venv/
 *.csv
 .pylintrc
+.vscode/
+test_db.py
