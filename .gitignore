@@ -3,3 +3,4 @@ venv/
 .pylintrc
 .vscode/
 test_db.py
+data/

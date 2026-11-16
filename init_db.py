@@ -18,6 +18,7 @@ data = {
     "exercise_name": ["beverages_and_food", "simple window"],
     "tables": [["beverages", "food_items"], "simple window"],
     "last_reviewed": ["1970-01-01", "1970-01-01"],
+    "answer": ["SELECT * FROM beverages CROSS JOIN food_items", ""],
 }
 memory_state_df = pd.DataFrame(data)
 con.execute("CREATE TABLE IF NOT EXISTS memory_state AS SELECT * FROM memory_state_df")

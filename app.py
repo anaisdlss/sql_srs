@@ -1,7 +1,9 @@
+import ast
+
 import duckdb
 import streamlit as st
 
-con = duckdb.connect("data/exercices_sql_tables.duckdb")
+con = duckdb.connect("data/exercices_sql_tables.duckdb", read_only=True)
 
 
 st.write("""
@@ -35,9 +37,9 @@ with st.sidebar:
 # query sql
 st.header("Entrez votre code :")
 query = st.text_area(label="Votre code SQL ici", key="user_input")
-# if query:
-#     result = duckdb.sql(query).df()
-#     st.dataframe(result)
+if query:
+    result_query = con.execute(query).df()
+    st.dataframe(result_query)
 
 #     try:
 #         result = result[solution_df.columns]
@@ -49,16 +51,19 @@ query = st.text_area(label="Votre code SQL ici", key="user_input")
 #         st.write(f"Result has {n_lines_differences} lines with the solution")
 
 
-# # tabes solution_dfs
-# tab2, tab3 = st.tabs(["Table", "solution_df"])
+# tabes solution_dfs
+tab2, tab3 = st.tabs(["Table", "solution_df"])
 
-# with tab2:
-#     st.write("table: beverages")
-#     st.dataframe(beverages)
-#     st.write("table: food_items")
-#     st.dataframe(food_items)
-#     st.write("expected:")
-#     st.dataframe(solution_df)
+with tab2:
+    tables_exercice = ast.literal_eval(exercice.loc[0, "tables"])
+    for table in tables_exercice:
+        st.write(f"table: {table}")
+        table_df = con.execute(f"SELECT * FROM {table}").df()
+        st.dataframe(table_df)
 
-# with tab3:
-#     st.write(ANSWER_STR)
+with tab3:
+    exercice_name = exercice.loc[0, "exercise_name"]
+    solution_fichier = f"answers/{exercice_name}.sql"
+    with open(solution_fichier, "r") as f:
+        solution = f.read()
+    st.write(solution)
