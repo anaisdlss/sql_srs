@@ -30,40 +30,48 @@ with st.sidebar:
     )
     st.write("You selected:", theme)
 
+try:
     exercice = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df()
-    st.write(exercice)
-
-
-# query sql
-st.header("Entrez votre code :")
-query = st.text_area(label="Votre code SQL ici", key="user_input")
-if query:
-    result_query = con.execute(query).df()
-    st.dataframe(result_query)
-
-#     try:
-#         result = result[solution_df.columns]
-#         st.dataframe(result.compare(solution_df))
-#     except KeyError:
-#         st.write("Some columns are missing")
-#     except ValueError:
-#         n_lines_differences = result.shape[0] - solution_df.shape[0]
-#         st.write(f"Result has {n_lines_differences} lines with the solution")
-
-
-# tabes solution_dfs
-tab2, tab3 = st.tabs(["Table", "solution_df"])
-
-with tab2:
-    tables_exercice = ast.literal_eval(exercice.loc[0, "tables"])
-    for table in tables_exercice:
-        st.write(f"table: {table}")
-        table_df = con.execute(f"SELECT * FROM {table}").df()
-        st.dataframe(table_df)
-
-with tab3:
     exercice_name = exercice.loc[0, "exercise_name"]
     solution_fichier = f"answers/{exercice_name}.sql"
     with open(solution_fichier, "r") as f:
         solution = f.read()
-    st.write(solution)
+
+    solution_df = con.execute(solution).df()
+
+    # query sql
+    st.header("Entrez votre code :")
+    query = st.text_area(label="Votre code SQL ici", key="user_input")
+    if query:
+        result = con.execute(query).df()
+        st.dataframe(result)
+
+        try:
+            result = result[solution_df.columns]  # dans meme ordre
+            differences = result.compare(solution_df)
+            if differences.empty:
+                st.success("Bonne réponse !")
+            else:
+                st.dataframe(differences)
+        except KeyError:
+            st.write("Some columns are missing")
+
+        n_lines_differences = result.shape[0] - solution_df.shape[0]
+        if n_lines_differences != 0:
+            st.write(f"Result has {n_lines_differences} lines with the solution")
+
+    # tabes solution_dfs
+    tab2, tab3 = st.tabs(["Table", "solution_df"])
+
+    with tab2:
+        tables_exercice = ast.literal_eval(exercice.loc[0, "tables"])
+        for table in tables_exercice:
+            st.write(f"table: {table}")
+            table_df = con.execute(f"SELECT * FROM {table}").df()
+            st.dataframe(table_df)
+
+    with tab3:
+        st.write(solution)
+
+except KeyError:
+    st.write("Veuillez sélectionner un thème")
