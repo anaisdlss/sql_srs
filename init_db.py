@@ -1,9 +1,14 @@
 import io
+import os
 
 import duckdb
 import pandas as pd
 
-# storage_compatibility_version : format lisible par les DuckDB 1.x (ex. extension VS Code)
+# réinitialiser la base de données
+DB_PATH = "data/exercices_sql_tables.duckdb"
+if os.path.exists(DB_PATH):
+    os.remove(DB_PATH)
+
 con = duckdb.connect(
     database="data/exercices_sql_tables.duckdb",
     config={"storage_compatibility_version": "v1.0.0"},
@@ -14,10 +19,10 @@ con = duckdb.connect(
 # EXERCISES LIST
 # ------------------------------------------------------------
 data = {
-    "theme": ["cross_joins", "window_functions"],
-    "exercise_name": ["beverages_and_food", "simple window"],
-    "tables": [["beverages", "food_items"], "simple window"],
-    "last_reviewed": ["1970-01-01", "1970-01-01"],
+    "theme": ["cross_joins", "cross_joins"],
+    "exercise_name": ["beverages_and_food", "sizes_and_trademarks"],
+    "tables": [["beverages", "food_items"], ["sizes", "trademarks"]],
+    "last_reviewed": ["1980-01-01", "1970-01-01"],
 }
 memory_state_df = pd.DataFrame(data)
 con.execute("CREATE TABLE IF NOT EXISTS memory_state AS SELECT * FROM memory_state_df")
@@ -47,3 +52,25 @@ muffin,3
 food_items = pd.read_csv(io.StringIO(CSV2))
 
 con.execute("CREATE TABLE IF NOT EXISTS food_items AS SELECT * FROM food_items")
+
+sizes = """
+size
+XS
+M
+L
+XL
+"""
+
+trademarks = """
+trademark
+Nike
+Asphalte
+Abercrombie
+Lewis
+"""
+
+sizes = pd.read_csv(io.StringIO(sizes))
+trademarks = pd.read_csv(io.StringIO(trademarks))
+
+con.execute("CREATE TABLE IF NOT EXISTS sizes AS SELECT * FROM sizes")
+con.execute("CREATE TABLE IF NOT EXISTS trademarks AS SELECT * FROM trademarks")

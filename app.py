@@ -1,5 +1,3 @@
-import ast
-
 import duckdb
 import streamlit as st
 
@@ -11,27 +9,25 @@ SQL SRS
 Spaced Repetition System with SQL
 """)
 
-# données
-
-# ANSWER_STR = """
-# SELECT * FROM beverages
-# CROSS JOIN food_items
-# """
-
-# solution_df = duckdb.sql(ANSWER_STR).df()
-
-
-with st.sidebar:
-    theme = st.selectbox(
-        "What would you like to review?",
-        ("cross_joins", "GroupBy", "window_functions"),
-        index=None,
-        placeholder="Select a theme",
-    )
-    st.write("You selected:", theme)
 
 try:
-    exercice = con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'").df()
+
+    with st.sidebar:
+        theme = st.selectbox(
+            "What would you like to review?",
+            ("cross_joins", "GroupBy", "window_functions"),
+            index=None,
+            placeholder="Select a theme",
+        )
+
+        exercice = (
+            con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'")
+            .df()
+            .sort_values("last_reviewed")
+            .reset_index(drop=True)
+        )
+        st.dataframe(exercice)
+
     exercice_name = exercice.loc[0, "exercise_name"]
     solution_fichier = f"answers/{exercice_name}.sql"
     with open(solution_fichier, "r") as f:
@@ -48,13 +44,16 @@ try:
 
         try:
             result = result[solution_df.columns]  # dans meme ordre
-            differences = result.compare(solution_df)
+            cols = list(solution_df.columns)
+            result_sorted = result.sort_values(cols).reset_index(drop=True)
+            solution_sorted = solution_df.sort_values(cols).reset_index(drop=True)
+            differences = result_sorted.compare(solution_sorted)
             if differences.empty:
                 st.success("Bonne réponse !")
             else:
                 st.dataframe(differences)
         except KeyError:
-            st.write("Some columns are missing")
+            st.warning("Some columns are missing")
 
         n_lines_differences = result.shape[0] - solution_df.shape[0]
         if n_lines_differences != 0:
@@ -64,7 +63,7 @@ try:
     tab2, tab3 = st.tabs(["Table", "solution_df"])
 
     with tab2:
-        tables_exercice = ast.literal_eval(exercice.loc[0, "tables"])
+        tables_exercice = exercice.loc[0, "tables"]
         for table in tables_exercice:
             st.write(f"table: {table}")
             table_df = con.execute(f"SELECT * FROM {table}").df()
