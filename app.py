@@ -1,8 +1,8 @@
-import io
-
 import duckdb
-import pandas as pd
 import streamlit as st
+
+con = duckdb.connect("data/exercices_sql_tables.duckdb", read_only=True)
+
 
 st.write("""
 SQL SRS
@@ -10,82 +10,67 @@ Spaced Repetition System with SQL
 """)
 
 
-# données
-CSV = """
-beverage,price
-orange juice,2.5
-Expresso,2
-Tea,3
-"""
-beverages = pd.read_csv(io.StringIO(CSV))
+try:
 
-CSV2 = """
-food_item,food_price
-cookie juice,2.5
-chocolatine,2
-muffin,3
-"""
-food_items = pd.read_csv(io.StringIO(CSV2))
+    with st.sidebar:
+        theme = st.selectbox(
+            "What would you like to review?",
+            ("cross_joins", "GroupBy", "window_functions"),
+            index=None,
+            placeholder="Select a theme",
+        )
 
-ANSWER_STR = """
-SELECT * FROM beverages
-CROSS JOIN food_items
-"""
+        exercice = (
+            con.execute(f"SELECT * FROM memory_state WHERE theme = '{theme}'")
+            .df()
+            .sort_values("last_reviewed")
+            .reset_index(drop=True)
+        )
+        st.dataframe(exercice)
 
-solution_df = duckdb.sql(ANSWER_STR).df()
+    exercice_name = exercice.loc[0, "exercise_name"]
+    solution_fichier = f"answers/{exercice_name}.sql"
+    with open(solution_fichier, "r") as f:
+        solution = f.read()
 
+    solution_df = con.execute(solution).df()
 
-with st.sidebar:
-    option = st.selectbox(
-        "What do you want to review ?",
-        ["Joins", "Groupby", "Window Function"],
-        placeholder="Select a theme...",
-    )
-    st.write(f"You selected {option}")
+    # query sql
+    st.header("Entrez votre code :")
+    query = st.text_area(label="Votre code SQL ici", key="user_input")
+    if query:
+        result = con.execute(query).df()
+        st.dataframe(result)
 
+        try:
+            result = result[solution_df.columns]  # dans meme ordre
+            cols = list(solution_df.columns)
+            result_sorted = result.sort_values(cols).reset_index(drop=True)
+            solution_sorted = solution_df.sort_values(cols).reset_index(drop=True)
+            differences = result_sorted.compare(solution_sorted)
+            if differences.empty:
+                st.success("Bonne réponse !")
+            else:
+                st.dataframe(differences)
+        except KeyError:
+            st.warning("Some columns are missing")
 
-with st.sidebar:
-    option = st.selectbox(
-        "What would you like to review?",
-        ("Joins", "GroupBy", "Window Functions"),
-        index=None,
-        placeholder="Select a theme",
-    )
-
-st.write("You selected:", option)
-
-# query sql
-st.header("Entrez votre code :")
-query = st.text_area(label="Votre code SQL ici", key="user_input")
-if query:
-    result = duckdb.sql(query).df()
-    st.dataframe(result)
-
-    try:
-        result = result[solution_df.columns]
-        st.dataframe(result.compare(solution_df))
-    except KeyError:
-        st.write("Some columns are missing")
-    except ValueError:
         n_lines_differences = result.shape[0] - solution_df.shape[0]
-        st.write(f"Result has {n_lines_differences} lines with the solution")
+        if n_lines_differences != 0:
+            st.write(f"Result has {n_lines_differences} lines with the solution")
 
+    # tabes solution_dfs
+    tab2, tab3 = st.tabs(["Table", "solution_df"])
 
-def fonction():
-    """coucocu"""
-    print("coucou")
+    with tab2:
+        tables_exercice = exercice.loc[0, "tables"]
+        for table in tables_exercice:
+            st.write(f"table: {table}")
+            table_df = con.execute(f"SELECT * FROM {table}").df()
+            st.dataframe(table_df)
 
+    with tab3:
+        st.write(solution)
 
-# tabes solution_dfs
-tab2, tab3 = st.tabs(["Table", "solution_df"])
-
-with tab2:
-    st.write("table: beverages")
-    st.dataframe(beverages)
-    st.write("table: food_items")
-    st.dataframe(food_items)
-    st.write("expected:")
-    st.dataframe(solution_df)
-
-with tab3:
-    st.write(ANSWER_STR)
+except KeyError:
+    st.write("Veuillez sélectionner un thème")
