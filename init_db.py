@@ -6,6 +6,7 @@ import pandas as pd
 
 # réinitialiser la base de données
 DB_PATH = "data/exercices_sql_tables.duckdb"
+
 if os.path.exists(DB_PATH):
     os.remove(DB_PATH)
 
