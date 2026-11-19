@@ -12,7 +12,6 @@ if os.path.exists(DB_PATH):
 
 con = duckdb.connect(
     database="data/exercices_sql_tables.duckdb",
-    config={"storage_compatibility_version": "v1.0.0"},
 )
 
 
