@@ -1,5 +1,16 @@
+import logging
+import os
+
 import duckdb
 import streamlit as st
+
+logger = logging.getLogger(__name__)
+
+if "data" not in os.listdir():
+    logger.info("Contenu du dossier : %s", os.listdir())
+    logger.info("Création du dossier data")
+    os.mkdir("data")
+
 
 con = duckdb.connect("data/exercices_sql_tables.duckdb", read_only=True)
 
