@@ -1,5 +1,7 @@
 import logging
 import os
+import subprocess
+import sys
 
 import duckdb
 import streamlit as st
@@ -10,6 +12,9 @@ if "data" not in os.listdir():
     logger.info("Contenu du dossier : %s", os.listdir())
     logger.info("Création du dossier data")
     os.mkdir("data")
+
+if not os.path.exists("data/exercices_sql_tables.duckdb"):
+    subprocess.run([sys.executable, "init_db.py"], check=True)
 
 
 con = duckdb.connect("data/exercices_sql_tables.duckdb", read_only=True)
