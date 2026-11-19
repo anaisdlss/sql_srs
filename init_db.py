@@ -60,6 +60,8 @@ M
 L
 XL
 """
+sizes = pd.read_csv(io.StringIO(sizes))
+con.execute("CREATE TABLE IF NOT EXISTS sizes AS SELECT * FROM sizes")
 
 trademarks = """
 trademark
@@ -69,8 +71,7 @@ Abercrombie
 Lewis
 """
 
-sizes = pd.read_csv(io.StringIO(sizes))
 trademarks = pd.read_csv(io.StringIO(trademarks))
-
-con.execute("CREATE TABLE IF NOT EXISTS sizes AS SELECT * FROM sizes")
 con.execute("CREATE TABLE IF NOT EXISTS trademarks AS SELECT * FROM trademarks")
+
+con.close()
